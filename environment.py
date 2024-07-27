@@ -18,7 +18,7 @@ from fallbacks import pygame
 from items import Coin, Explosion, Bomb
 
 WorldArgs = namedtuple("WorldArgs",
-                       ["no_gui", "fps", "turn_based", "update_interval", "save_replay", "replay", "make_video", "continue_without_training", "log_dir", "save_stats", "match_name", "seed", "silence_errors", "scenario"])
+                       ["no_gui", "fps", "turn_based", "update_interval", "save_replay", "replay", "make_video", "continue_without_training", "log_dir", "save_stats", "match_name", "seed", "silence_errors", "scenario", "image"])
 
 
 class Trophy:
@@ -627,6 +627,10 @@ class GUI:
         if self.world.running and self.world.args.make_video:
             self.world.logger.debug(f'Saving screenshot for frame {self.frame}')
             pygame.image.save(self.screen, str(self.screenshot_dir / f'{self.world.round_id}_{self.frame:05d}.png'))
+
+        if self.world.running and hasattr(self.world.args, "image"):
+            self.world.logger.debug(f'Saving image')
+            pygame.image.save(self.screen, Path(self.world.args.image).with_suffix(".png"))
 
     def make_video(self):
         # Turn screenshots into videos

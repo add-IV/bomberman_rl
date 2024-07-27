@@ -127,8 +127,12 @@ def main(argv = None):
     replay_parser = subparsers.add_parser("replay")
     replay_parser.add_argument("replay", help="File to load replay from")
 
+    # Image arguments
+    image_parser = subparsers.add_parser("image")
+    image_parser.add_argument("image", help="File to load image source from")
+
     # Interaction
-    for sub in [play_parser, replay_parser]:
+    for sub in [play_parser, replay_parser, image_parser]:
         sub.add_argument("--turn-based", default=False, action="store_true",
                          help="Wait for key press until next movement")
         sub.add_argument("--update-interval", type=float, default=0.1,
@@ -145,6 +149,11 @@ def main(argv = None):
         args.no_gui = False
         args.n_rounds = 1
         args.match_name = Path(args.replay).name
+
+    if args.command_name == "image":
+        args.no_gui = False
+        args.n_rounds = 1
+        args.match_name = Path(args.image).name
 
     has_gui = not args.no_gui
     if has_gui:
@@ -166,6 +175,12 @@ def main(argv = None):
         every_step = not args.skip_frames
     elif args.command_name == "replay":
         world = ReplayWorld(args)
+        every_step = True
+    elif args.command_name == "image":
+        from image import ImageWorld
+        world = ImageWorld(args)
+        args.make_video = False
+        args.make_image = True
         every_step = True
     else:
         raise ValueError(f"Unknown command {args.command_name}")
