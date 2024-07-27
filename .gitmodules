@@ -1,0 +1,3 @@
+[submodule "agent_code/bomberman_agent"]
+	path = agent_code/bomberman_agent
+	url = https://github.com/add-IV/bomberman_agent.git
