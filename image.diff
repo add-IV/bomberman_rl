@@ -1,0 +1,227 @@
+﻿diff --git a/.gitignore b/.gitignore
+index c260f0c..fa1f3bb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -110,4 +110,5 @@ screenshots/*.mp4
+ screenshots/*.webm
+ 
+ replays/
+-results/
+\ No newline at end of file
++results/
++images/
+\ No newline at end of file
+diff --git a/environment.py b/environment.py
+index 0ec3726..24cc052 100644
+--- a/environment.py
++++ b/environment.py
+@@ -18,7 +18,7 @@ from fallbacks import pygame
+ from items import Coin, Explosion, Bomb
+ 
+ WorldArgs = namedtuple("WorldArgs",
+-                       ["no_gui", "fps", "turn_based", "update_interval", "save_replay", "replay", "make_video", "continue_without_training", "log_dir", "save_stats", "match_name", "seed", "silence_errors", "scenario"])
++                       ["no_gui", "fps", "turn_based", "update_interval", "save_replay", "replay", "make_video", "continue_without_training", "log_dir", "save_stats", "match_name", "seed", "silence_errors", "scenario", "image"])
+ 
+ 
+ class Trophy:
+@@ -628,6 +628,10 @@ class GUI:
+             self.world.logger.debug(f'Saving screenshot for frame {self.frame}')
+             pygame.image.save(self.screen, str(self.screenshot_dir / f'{self.world.round_id}_{self.frame:05d}.png'))
+ 
++        if self.world.running and hasattr(self.world.args, "image"):
++            self.world.logger.debug(f'Saving image')
++            pygame.image.save(self.screen, Path(self.world.args.image).with_suffix(".png"))
++
+     def make_video(self):
+         # Turn screenshots into videos
+         assert self.world.args.make_video is not False
+diff --git a/image.py b/image.py
+new file mode 100644
+index 0000000..e871f15
+--- /dev/null
++++ b/image.py
+@@ -0,0 +1,141 @@
++from typing import Tuple, List
++
++import numpy as np
++
++import settings as s
++from agents import Agent
++from environment import GenericWorld, WorldArgs
++from items import Coin, Bomb, Explosion
++
++
++class ImageWorld(GenericWorld):
++    """
++    World class for displaying a single image.
++
++    Imput file should be a .txt file with the following format:
++    first line: n_rows, n_cols, n_agents
++    next n_rows x n_cols space: the arena
++    w : wall
++      : empty space
++    c : crate
++    0 : coin
++    a0, a1, a2, a3: agent 0, 1, 2, 3
++    b0, b1, b2, b3: bomb of agent 0, 1, 2, 3
++    e0, e1, e2, e3: explosion in stage 0, 1, 2, 3
++    s1, s2: smoke in stage 1, 2
++    next n_agents lines: agent name, code name
++
++    Example:
++    5 5 2
++    w w w w w 
++    w 0 w c w 
++    w s1e2b1w 
++    w a1a2  w 
++    w w w w w 
++    agent1 user_agent
++    agent2 tpl_agent
++
++    the code names are used to load avatar and bomb sprites from the code directory
++    """
++    def __init__(self, args: WorldArgs):
++        super().__init__(args)
++
++        image_file = args.image
++        self.logger.info(f'Loading world file "{image_file}"')
++        self.image_file = image_file
++        with open(image_file, 'r') as f:
++            self.image_source = f.read()
++
++        # get map size and number of agents
++        n_rows, n_cols, n_agents = self.image_source.split('\n')[0].split()
++        self.n_rows, self.n_cols, self.n_agents = int(n_rows), int(n_cols), int(n_agents)
++
++        arena_string = self.image_source.split('\n')[1:self.n_rows+1]
++        # Transpose the arena since the gui displays it transposed
++        print([[row[i:i+2] for i in range(0, len(row), 2)] for row in arena_string])
++        self.arena_char_array = np.array([[row[i:i+2] for i in range(0, len(row), 2)] for row in arena_string]).T
++
++        # get the agents
++        self.agents = []
++        for line in self.image_source.split('\n')[self.n_rows+1:]:
++            split = line.split()
++            agent_name = split[0]
++            code_name = split[1]
++            avatar_sprite_desc = bomb_sprite_desc = self.colors.pop()
++            self.agents.append(ImageAgent(agent_name, code_name, avatar_sprite_desc, bomb_sprite_desc))
++
++    def build_arena(self) -> Tuple[np.array, List[Coin], List[Agent]]:
++        arena = np.zeros((self.n_rows, self.n_cols))
++        agents = [None] * self.n_agents
++        coins = []
++        bombs = []
++        explosions = []
++        for index, identifier in np.ndenumerate(self.arena_char_array):
++            if identifier[0] == 'w':
++                arena[index] = -1
++            elif identifier[0] == 'c':
++                arena[index] = 1
++            elif identifier[0] == '0':
++                coins.append(Coin(index, True))
++            elif identifier[0] == 'a':
++                print(int(identifier[-1]))
++                agents[int(identifier[-1])] = self.agents[int(identifier[-1])]
++                agents[int(identifier[-1])].x, agents[int(identifier[-1])].y = index
++            elif identifier[0] == 'b':
++                agent = self.agents[int(identifier[-1])]
++                bombs.append(Bomb(index, agent, 4, 4, agent.bomb_sprite))
++            elif identifier[0] == 'e':
++                timer = int(identifier[1])
++                screen_coords = (s.GRID_OFFSET[0] + s.GRID_SIZE * index[0],
++                         s.GRID_OFFSET[1] + s.GRID_SIZE * index[1])
++                explosions.append(Explosion([index], [screen_coords], None, timer))
++            elif identifier[0] == 's':
++                timer = int(identifier[1])
++                screen_coords = (s.GRID_OFFSET[0] + s.GRID_SIZE * index[0],
++                         s.GRID_OFFSET[1] + s.GRID_SIZE * index[1])
++                explosion = Explosion([index], [screen_coords], None, timer)
++                explosion.stage = 1
++                explosions.append(explosion)
++        self.bombs = bombs
++        self.explosions = explosions
++        return arena, coins, agents
++    
++    
++    def do_step(self, user_input='WAIT'):
++        assert self.running
++
++        self.step += 1
++        self.logger.info(f'STARTING STEP {self.step}')
++
++        self.user_input = user_input
++        self.logger.debug(f'User input: {self.user_input}')
++
++        self.poll_and_run_agents()
++
++        if self.time_to_stop():
++            self.end_round()
++
++    def poll_and_run_agents(self):
++        pass
++
++    def time_to_stop(self):
++        time_to_stop = True
++        return time_to_stop
++
++class ImageAgent(Agent):
++    """
++    Agents class firing off a predefined sequence of actions.
++    """
++
++    def __init__(self, agent_name, code_name, avatar_sprite_desc, bomb_sprite_desc):
++        """Recreate the agent as it was at the beginning of the original game."""
++        super().__init__(agent_name, code_name, agent_name, False, None, avatar_sprite_desc, bomb_sprite_desc)
++
++    def setup(self):
++        pass
++
++    def act(self, game_state):
++        pass
++
++    def wait_for_act(self):
++        pass
+diff --git a/main.py b/main.py
+index b99866d..a7ce4d8 100644
+--- a/main.py
++++ b/main.py
+@@ -127,8 +127,12 @@ def main(argv = None):
+     replay_parser = subparsers.add_parser("replay")
+     replay_parser.add_argument("replay", help="File to load replay from")
+ 
++    # Image arguments
++    image_parser = subparsers.add_parser("image")
++    image_parser.add_argument("image", help="File to load image source from")
++
+     # Interaction
+-    for sub in [play_parser, replay_parser]:
++    for sub in [play_parser, replay_parser, image_parser]:
+         sub.add_argument("--turn-based", default=False, action="store_true",
+                          help="Wait for key press until next movement")
+         sub.add_argument("--update-interval", type=float, default=0.1,
+@@ -146,6 +150,11 @@ def main(argv = None):
+         args.n_rounds = 1
+         args.match_name = Path(args.replay).name
+ 
++    if args.command_name == "image":
++        args.no_gui = False
++        args.n_rounds = 1
++        args.match_name = Path(args.image).name
++
+     has_gui = not args.no_gui
+     if has_gui:
+         if not LOADED_PYGAME:
+@@ -167,6 +176,12 @@ def main(argv = None):
+     elif args.command_name == "replay":
+         world = ReplayWorld(args)
+         every_step = True
++    elif args.command_name == "image":
++        from image import ImageWorld
++        world = ImageWorld(args)
++        args.make_video = False
++        args.make_image = True
++        every_step = True
+     else:
+         raise ValueError(f"Unknown command {args.command_name}")
+ 
