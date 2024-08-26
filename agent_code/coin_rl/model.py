@@ -16,12 +16,10 @@ device = torch_directml.device()
 # code is based on the following tutorial:
 # https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html
 
-# BATCH_SIZE is the number of transitions sampled from the replay buffer
 # GAMMA is the discount factor as mentioned in the previous section
 # EPS is the exploration rate of the agent
 # TAU is the update rate of the target network
 # LR is the learning rate of the ``AdamW`` optimizer
-BATCH_SIZE = 128
 GAMMA = 0.8
 EPS = 0.1
 TAU = 0.005
@@ -114,7 +112,7 @@ class DQN(nn.Module):
 
 
 def optimize_model(memory, policy_net, target_net, optimizer):
-    batch_size = min(len(memory), BATCH_SIZE)
+    batch_size = len(memory)
     transitions = memory.sample(batch_size)
 
     batch = Transition(*zip(*transitions))
