@@ -55,17 +55,26 @@ def state_from_game_state(game_state):
     # -1 for walls, 0 for free space, 1 for crates
     local_view = padded_board[x : x + 2 * local_size + 1, y : y + 2 * local_size + 1]
 
-    # local coins
-    local_coins = np.zeros((2 * local_size + 1, 2 * local_size + 1))
+    # local coins and bombs
+    local_coins_and_bombs = np.zeros((2 * local_size + 1, 2 * local_size + 1))
     for coin in coins:
         coin_x, coin_y = coin
         if (
             x - local_size <= coin_x <= x + local_size
             and y - local_size <= coin_y <= y + local_size
         ):
-            local_coins[coin_x - x + local_size, coin_y - y + local_size] = 1
+            local_coins_and_bombs[coin_x - x + local_size, coin_y - y + local_size] = 1
 
-    state = np.concatenate([local_view, local_coins], axis=None)
+    for bomb in bombs:
+        location, _ = bomb
+        bomb_x, bomb_y = location
+        if (
+            x - local_size <= bomb_x <= x + local_size
+            and y - local_size <= bomb_y <= y + local_size
+        ):
+            local_coins_and_bombs[bomb_x - x + local_size, bomb_y - y + local_size] = -1
+
+    state = np.concatenate([local_view, local_coins_and_bombs], axis=None)
     state = torch.tensor(state, device=device, dtype=torch.float32).view(1, -1)
 
     return state
