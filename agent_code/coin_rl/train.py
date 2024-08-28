@@ -30,6 +30,7 @@ def setup_training(self):
     self.replay_memory = ReplayMemory(600)
     self.optimizer = optim.Adam(self.policy_net.parameters(), lr=0.001)
 
+
 def game_events_occurred(
     self,
     old_game_state: dict,
@@ -54,11 +55,14 @@ def end_of_round(self, last_game_state: dict, last_action: str, events: list[str
     reward = torch.tensor([reward_from_events(events)], device=device)
     action = torch.tensor([ACTIONS.index(last_action)], device=device)
     self.replay_memory.push(old_state, action, new_state, reward)
-    
+
     if self.coins_collected > 0:
         self.logger.info(f"Coins collected: {self.coins_collected}")
         self.coins_collected = 0
+    else:
+        self.logger.info("No coins collected")
     optimize_model(self.replay_memory, self.policy_net, self.target_net, self.optimizer)
+
 
 def reward_from_events(events: list[str]) -> int:
     game_rewards = {
@@ -67,8 +71,7 @@ def reward_from_events(events: list[str]) -> int:
         e.KILLED_SELF: -10,
         e.GOT_KILLED: -5,
         e.WAITED: -0.1,
-        e.INVALID_ACTION: -0.1,
-        e.BOMB_DROPPED: -0.1,
+        e.INVALID_ACTION: -1,
         e.CRATE_DESTROYED: 0.5,
         e.COIN_FOUND: 0.5,
     }
