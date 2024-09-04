@@ -25,7 +25,7 @@ EPS = 0.1
 TAU = 0.005
 LR = 1e-4
 
-PARAMETER_SIZE = 98
+PARAMETER_SIZE = 7**2 + 7**2 + 4
 
 ACTIONS = ["UP", "DOWN", "LEFT", "RIGHT", "WAIT", "BOMB"]
 
@@ -55,29 +55,48 @@ def state_from_game_state(game_state):
     # -1 for walls, 0 for free space, 1 for crates
     local_view = padded_board[x : x + 2 * local_size + 1, y : y + 2 * local_size + 1]
 
-    # local coins and bombs
-    local_coins_and_bombs = np.zeros((2 * local_size + 1, 2 * local_size + 1))
+    # local coins
+    local_coins = np.zeros((2 * local_size + 1, 2 * local_size + 1))
     for coin in coins:
         coin_x, coin_y = coin
         if (
             x - local_size <= coin_x <= x + local_size
             and y - local_size <= coin_y <= y + local_size
         ):
-            local_coins_and_bombs[coin_x - x + local_size, coin_y - y + local_size] = 1
+            local_coins[coin_x - x + local_size, coin_y - y + local_size] = 1
 
-    for bomb in bombs:
-        location, _ = bomb
-        bomb_x, bomb_y = location
-        if (
-            x - local_size <= bomb_x <= x + local_size
-            and y - local_size <= bomb_y <= y + local_size
-        ):
-            local_coins_and_bombs[bomb_x - x + local_size, bomb_y - y + local_size] = -1
+    # long-range view
+    # metric for amount of coins in each direction
+    long_range_view = coin_metric(coins, self_position)
 
-    state = np.concatenate([local_view, local_coins_and_bombs], axis=None)
+    state = np.concatenate([local_view, local_coins, long_range_view], axis=None)
     state = torch.tensor(state, device=device, dtype=torch.float32).view(1, -1)
 
     return state
+
+
+def coin_metric(coins, position):
+    if len(coins) == 0:
+        return np.zeros(4)
+    x, y = position
+    metric = np.zeros(4)
+    for coin in coins:
+        coin_x, coin_y = coin
+        dx, dy = coin_x - x, coin_y - y
+        if dx == 0 and dy == 0:
+            continue
+        if abs(dx) > abs(dy):
+            if dx > 0:
+                metric[3] += 1 / ((abs(dx) + abs(dy))) # right
+            else:
+                metric[2] += 1 / ((abs(dx) + abs(dy))) # left
+        else:
+            if dy > 0:
+                metric[1] += 1 / ((abs(dx) + abs(dy))) # down
+            else:
+                metric[0] += 1 / ((abs(dx) + abs(dy))) # up
+    metric /= np.sum(metric)
+    return metric
 
 
 class ReplayMemory(object):
@@ -107,17 +126,21 @@ class DQN(nn.Module):
         x = F.relu(self.fc2(x))
         return self.fc3(x)
 
-    def select_action(self, state, eps_threshold=EPS):
+    def select_action(self, state, eps_threshold=EPS, all_actions=False):
         n_actions = len(ACTIONS)
 
         sample = random.random()
         if sample > eps_threshold:
             with torch.no_grad():
-                return self(state).max(1)[1].view(1, 1)
+                if all_actions:
+                    return self(state)
+                else:
+                    return self(state).max(1)[1]
         else:
             return torch.tensor(
                 [[random.randrange(n_actions)]], device=device, dtype=torch.long
             )
+
 
 
 def optimize_model(memory, policy_net, target_net, optimizer):

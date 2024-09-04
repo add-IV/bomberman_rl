@@ -13,6 +13,8 @@ import torch.nn.functional as F
 from agent_code.coin_rl.model import *
 
 device = torch_directml.device()
+
+
 ACTIONS = ['UP', 'DOWN', 'LEFT', 'RIGHT', 'WAIT', 'BOMB']
 
 def setup(self):
@@ -31,5 +33,24 @@ def act(self, game_state: dict):
     if self.train:
         action = self.policy_net.select_action(state)
     else:
-        action = self.model.select_action(state, eps_threshold=0.0)
+        actions = self.model.select_action(state, eps_threshold=0.0, all_actions=True).cpu().numpy()
+        sorted_actions = np.argsort(actions, axis=1)[0][::-1]
+        for action in sorted_actions:
+            if is_action_valid(game_state, ACTIONS[action]):
+                return ACTIONS[action]
     return ACTIONS[action]
+
+
+def is_action_valid(game_state, action):
+    """Check if an action is valid"""
+    x, y = game_state["self"][3]
+    if action == "UP":
+        return game_state["field"][x, y - 1] == 0
+    elif action == "DOWN":
+        return game_state["field"][x, y + 1] == 0
+    elif action == "LEFT":
+        return game_state["field"][x - 1, y] == 0
+    elif action == "RIGHT":
+        return game_state["field"][x + 1, y] == 0
+    else:
+        return True
