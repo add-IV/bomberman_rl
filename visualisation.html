@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>15x15 Button Color Grid</title>
+  <style>
+    /* Style for the container that holds the buttons */
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(17, 1fr); /* Creates 15 columns */
+      gap: 5px; /* Space between buttons */
+      width: min-content;
+      margin: 20px auto; /* Center the grid on the page */
+    }
+
+    /* Style for the individual buttons */
+    .button-grid button {
+      width: 40px;
+      height: 40px;
+      background-color: white; /* Default color */
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+
+    /* Style for the color selector buttons */
+    .color-selectors {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .color-selectors button {
+      width: 80px;
+      height: 40px;
+      margin: 0 5px;
+      border: 2px solid #ccc;
+      cursor: pointer;
+    }
+
+    /* Highlight the selected color button */
+    .color-selectors button.selected {
+      border: 3px solid black;
+    }
+  </style>
+</head>
+<body>
+  <h1 style="text-align: center;">15x15 Button Color Grid</h1>
+
+
+
+  <div class="color-selectors">
+    <script>
+      const colors = ['white', 'brown', 'red', 'blue', 'green', 'yellow']; // 5 colors
+
+        // Create a color selector button for each color
+        colors.forEach(color => {
+          const button = document.createElement('button');
+          button.classList.add('color-button');
+          button.dataset.color = color; // Store the color in the button's data attribute
+          button.style.backgroundColor = color; // Set the button's background color
+          button.value = color.charAt(0).toUpperCase() + color.slice(1); // Capitalize the color name
+          document.querySelector('.color-selectors').appendChild(button);
+        });
+
+
+    </script>
+  </div>
+
+  <div class="button-grid">
+    <!-- Dynamically generating 225 buttons (15x15) -->
+    <script>
+      let selectedColor = null; // No color selected initially
+
+      const gridContainer = document.querySelector('.button-grid');
+      const colorButtons = document.querySelectorAll('.color-button');
+
+      // Function to select a color from the color buttons
+      function selectColor(button) {
+        // Deselect any currently selected button
+        colorButtons.forEach(btn => btn.classList.remove('selected'));
+        // Mark the clicked button as selected
+        button.classList.add('selected');
+        // Set the selected color
+        selectedColor = button.dataset.color;
+      }
+
+      // Attach click event to each color selector button
+      colorButtons.forEach(button => {
+        button.addEventListener('click', () => selectColor(button));
+      });
+
+      // Function to change the color of the button based on selectedColor
+      function applySelectedColor(button) {
+        if (selectedColor) {
+          button.style.backgroundColor = selectedColor; // Update the button color
+        }
+      }
+
+      // Create the 15x15 grid of buttons
+      for (let i = 0; i < 17*17; i++) {
+        const button = document.createElement('button');
+        button.addEventListener('click', () => applySelectedColor(button)); // Add click event to apply selected color
+        gridContainer.appendChild(button);
+      }
+    </script>
+  </div>
+</body>
+</html>
