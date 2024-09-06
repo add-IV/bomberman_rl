@@ -85,16 +85,17 @@ def coin_metric(coins, position):
         dx, dy = coin_x - x, coin_y - y
         if dx == 0 and dy == 0:
             continue
+        sum_of_differences = abs(dx) + abs(dy)
         if abs(dx) > abs(dy):
             if dx > 0:
-                metric[3] += 1 / ((abs(dx) + abs(dy))) # right
+                metric[3] += 1 / sum_of_differences # right
             else:
-                metric[2] += 1 / ((abs(dx) + abs(dy))) # left
+                metric[2] += 1 / sum_of_differences # left
         else:
             if dy > 0:
-                metric[1] += 1 / ((abs(dx) + abs(dy))) # down
+                metric[1] += 1 / sum_of_differences # down
             else:
-                metric[0] += 1 / ((abs(dx) + abs(dy))) # up
+                metric[0] += 1 / sum_of_differences # up
     metric /= np.sum(metric)
     return metric
 
@@ -108,7 +109,8 @@ class ReplayMemory(object):
         self.memory.append(Transition(*args))
 
     def sample(self, batch_size):
-        return random.sample(self.memory, batch_size)
+        # return random.sample(self.memory, batch_size)
+        return self.memory
 
     def __len__(self):
         return len(self.memory)
@@ -132,6 +134,7 @@ class DQN(nn.Module):
         sample = random.random()
         if sample > eps_threshold:
             with torch.no_grad():
+                print(self(state).max(1))
                 if all_actions:
                     return self(state)
                 else:
