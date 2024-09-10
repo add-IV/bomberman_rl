@@ -1,0 +1,36 @@
+[MESSAGES CONTROL]
+
+# Enable or disable specific pylint messages
+disable = C0114, C0115, C0116
+
+[FORMAT]
+
+# Set the maximum line length
+max-line-length = 120
+
+[REPORTS]
+
+# Output format for pylint reports
+output-format = colorized
+
+[TYPECHECK]
+
+# Enable type checking
+generated-members = typing.*, collections.*, numpy.*, pandas.*
+
+[DESIGN]
+
+# Maximum number of arguments for a function
+max-args = 5
+
+# Maximum number of local variables for a function
+max-locals = 10
+
+# Maximum number of return statements for a function
+max-returns = 6
+
+# Maximum number of branches for a function
+max-branches = 12
+
+# Maximum number of statements in a function
+max-statements = 50
