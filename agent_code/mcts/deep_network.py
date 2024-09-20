@@ -99,7 +99,7 @@ class PolicyHead(nn.Module):
 
 
 class MCTSNetwork(nn.Module):
-    def __init__(self, in_channels=7, hidden_size=2**7, residual_blocks=5):
+    def __init__(self, in_channels=7, hidden_size=2**7, residual_blocks=1):
         super().__init__()
         self.conv_block = ConvolutionalBlock(in_channels)
         self.residual_blocks = nn.Sequential(
