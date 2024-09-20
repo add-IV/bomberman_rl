@@ -1,4 +1,5 @@
 agent_code/training_data/training_data*
+runs/train*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

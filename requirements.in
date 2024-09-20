@@ -1,5 +1,9 @@
-numpy
+torch-directml==0.2.4.dev240815
+numpy<2.0
 scipy
 scikit-learn
 pygame
 tqdm
+torch
+torchvision
+tensorboard

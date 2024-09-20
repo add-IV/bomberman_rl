@@ -8,10 +8,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
-import torch_directml
 
-device = torch_directml.device()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # code is based on the following tutorial:
 # https://pytorch.org/tutorials/intermediate/reinforcement_q_learning.html

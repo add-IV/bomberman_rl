@@ -17,9 +17,6 @@ The policy head outputs the probabilities for each action.
 
 import torch
 import torch.nn as nn
-import torch_directml
-
-device = torch_directml.device()
 
 ACTIONS = ["UP", "DOWN", "LEFT", "RIGHT", "WAIT", "BOMB"]
 
@@ -121,9 +118,9 @@ class MCTSNetwork(nn.Module):
 
 def load_model(path):
     model = MCTSNetwork()
-    model.load_state_dict(torch.load(path))
+    model.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
 
-    return model.to(device)
+    return model
 
 
 def save_model(model, path):

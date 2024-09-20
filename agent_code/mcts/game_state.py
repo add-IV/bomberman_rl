@@ -1,8 +1,7 @@
 import numpy as np
 import torch
-import torch_directml
 
-device = torch_directml.device()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def nine_by_nine_to_six_by_six(board: np.ndarray) -> np.ndarray:
@@ -50,20 +49,14 @@ def nine_by_nine_to_six_by_six(board: np.ndarray) -> np.ndarray:
 
 def state_from_game_state(game_state):
     # get the relevant information from the game state
-    round = game_state["round"]
-    step = game_state["step"]
     board = game_state["field"]
     coins = game_state["coins"]
     bombs = game_state["bombs"]
     explosion_map = game_state["explosion_map"]
     self = game_state["self"]
-    self_score = self[1]
     self_bomb_available = self[2]
     self_position = self[3]
     others = game_state["others"]
-    others_score = [o[1] for o in others]
-    other_bomb_available = [o[2] for o in others]
-    others_positions = [o[3] for o in others]
 
     # initialize 9x9 state arrays
     view_range = 4
