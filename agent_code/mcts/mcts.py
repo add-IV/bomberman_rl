@@ -68,16 +68,21 @@ class MCTS:
         return child.total_value / (child.visits if child.visits !=0 else 0.001) + self.exploration_constant * np.sqrt(
             np.log(parent.visits) / child.visits
         )
+    
+    def use_policy_net(self, game_state):
+        value, policy = self.policy_net(state_from_game_state(game_state))
+        return value, policy
+
 
     def get_value(self, game_state):
         # use the policy network to get the value of the game state
-        value = self.policy_net(state_from_game_state(game_state))[0]
+        value = self.use_policy_net(game_state)[0]
         return value
 
     def expand(self, node):
         game_state = node.state
         current_reward = node.reward
-        value, policy = self.policy_net(state_from_game_state(game_state))
+        value, policy = self.use_policy_net(game_state)
         for action in ACTIONS:
             if self.state_explorer.is_action_valid(game_state, action):
                 new_state, reward = self.state_explorer.step(game_state, action)
