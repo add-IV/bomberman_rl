@@ -6,18 +6,18 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
-from .mcts import MCTS
-from .game_state import state_from_game_state
-from .deep_network import MCTSNetwork, load_model
+from agent_code.mcts.mcts import MCTS
+from agent_code.mcts.game_state import state_from_game_state
+from agent_code.mcts.deep_network import MCTSNetwork, load_model
 
-device = torch_directml.device()
 ACTIONS = ["UP", "DOWN", "LEFT", "RIGHT", "WAIT", "BOMB"]
 
 
 def setup(self):
     """Setup code, called once at the start of the game"""
     self.logger.info("Setup called")
-    self.model = load_model("mcts_model.pt")
+    curr_dir = path.dirname(path.abspath(__file__))
+    self.model = load_model(path.join(curr_dir, "mcts_model.pt"))
     self.mcts = MCTS(
         self.model,
         time_limit=0.4,
