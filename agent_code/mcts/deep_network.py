@@ -66,7 +66,7 @@ class ValueHead(nn.Module):
         self.conv = nn.Conv2d(in_channels, 1, 1)
         self.batch_norm = nn.BatchNorm2d(1)
         self.relu = nn.ReLU()
-        self.fc = nn.Linear(36, out_size)
+        self.fc = nn.Linear(12, out_size)
         self.tanh = nn.Tanh()
 
     def forward(self, x):
@@ -85,7 +85,7 @@ class PolicyHead(nn.Module):
         self.conv = nn.Conv2d(in_channels, 2, 1)
         self.batch_norm = nn.BatchNorm2d(2)
         self.relu = nn.ReLU()
-        self.fc = nn.Linear(72, out_size)
+        self.fc = nn.Linear(24, out_size)
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x):
@@ -118,7 +118,7 @@ class MCTSNetwork(nn.Module):
 
 def load_model(path):
     model = MCTSNetwork()
-    model.load_state_dict(torch.load(path, map_location=torch.device('cpu')))
+    model.load_state_dict(torch.load(path, map_location=torch.device("cpu")))
 
     return model
 

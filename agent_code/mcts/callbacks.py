@@ -1,7 +1,7 @@
 from os import path
 import numpy as np
 import torch
-import torch_directml
+# import torch_directml
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
@@ -17,16 +17,18 @@ def setup(self):
     """Setup code, called once at the start of the game"""
     self.logger.info("Setup called")
     curr_dir = path.dirname(path.abspath(__file__))
-    self.model = load_model(path.join(curr_dir, "mcts_model.pt"))
+    self.model = load_model(path.join(curr_dir, "small_guy.pt"))
     self.mcts = MCTS(
         self.model,
         time_limit=0.4,
         temperature=0,
         exploration_constant=1.0,
+        logger = self.logger
     )
 
 
 def act(self, game_state: dict):
     """Act method returns the next action the agent will take"""
-    action = self.mcts.search(game_state)
+    with torch.no_grad():
+        action = self.mcts.search(game_state)
     return action

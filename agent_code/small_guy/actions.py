@@ -1,0 +1,1 @@
+ACTIONS = ["UP", "DOWN", "LEFT", "RIGHT", "WAIT", "BOMB"]  # Possible actions
