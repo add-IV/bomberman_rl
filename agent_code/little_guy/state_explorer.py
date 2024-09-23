@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 ACTIONS = ["UP", "DOWN", "LEFT", "RIGHT", "WAIT", "BOMB"]
 
+
 @dataclass
 class GameState:
     self: tuple[str, int, bool, tuple[int, int]]
@@ -18,6 +19,7 @@ class GameState:
     round: int
     user_input: str
     bomb_cd: int = 0
+
 
 class StateExplorer:
     def __init__(self):
@@ -35,7 +37,7 @@ class StateExplorer:
         if others_dead and not coins and not crates:
             return True
         return False
-    
+
     def is_dead(self, game_state: GameState) -> bool:
         return game_state.self[0] == "dead"
 
@@ -50,43 +52,52 @@ class StateExplorer:
     def step(self, game_state: GameState, action) -> GameState:
         if not self.is_action_valid(game_state, action):
             raise ValueError(f"Invalid action: {action}")
-        
+
         self.new_game_state = copy.deepcopy(game_state)
         self.old_game_state = game_state
 
         self.cull_far_others()
 
         reward = 0
+        collect_coin = False
 
         self.step_player(action)
         reward += self.disincentivize_waiting(action)
         self.step_others()
-        reward += self.step_coins()
+        collect_coin = self.step_coins()
+        if collect_coin:
+            reward += 1
         reward += self.step_bombs()
         reward += self.evaluate_explosions()
         self.step_explosion_map()
 
-        return self.new_game_state, reward
-    
+        return self.new_game_state, reward, collect_coin
+
     def no_close_bombs(self) -> bool:
         all_far = True
         for bomb in self.new_game_state.bombs:
-            if abs(bomb[0][0] - self.new_game_state.self[3][0]) < 4 and abs(bomb[0][1] - self.new_game_state.self[3][1]) < 4:
+            if (
+                abs(bomb[0][0] - self.new_game_state.self[3][0]) < 4
+                and abs(bomb[0][1] - self.new_game_state.self[3][1]) < 4
+            ):
                 all_far = False
         return all_far
-    
+
     def disincentivize_waiting(self, action) -> int:
         if action == "WAIT" and self.no_close_bombs():
             return -0.1
         return 0
-        
+
     def cull_far_others(self) -> None:
         close_others = []
         for other in self.new_game_state.others:
-            if abs(other[3][0] - self.new_game_state.self[3][0]) < 4 and abs(other[3][1] - self.new_game_state.self[3][1]) < 4:
+            if (
+                abs(other[3][0] - self.new_game_state.self[3][0]) < 4
+                and abs(other[3][1] - self.new_game_state.self[3][1]) < 4
+            ):
                 close_others.append(other)
         self.new_game_state.others = close_others
-    
+
     def step_player(self, action) -> None:
         self_position = self.old_game_state.self[3]
         can_bomb = self.old_game_state.self[2]
@@ -117,28 +128,30 @@ class StateExplorer:
             can_bomb,
             self_position,
         )
-        
+
     def step_others(self) -> None:
         pass
 
     def step_coins(self) -> int:
-        reward = 0
+        collect_coin = False
         coins = self.new_game_state.coins
         self.new_game_state.coins = []
         for coin in coins:
             collected = False
             if coin == self.new_game_state.self[3]:
-                reward += 0.2
+                collect_coin = True
                 collected = True
             for other in self.new_game_state.others:
                 if coin == other[3]:
                     collected = True
             if not collected:
                 self.new_game_state.coins.append(coin)
-        return reward
-    
+        return collect_coin
+
     def step_explosion_map(self) -> None:
-        self.new_game_state.explosion_map = np.clip(self.new_game_state.explosion_map - 1, 0, 2)
+        self.new_game_state.explosion_map = np.clip(
+            self.new_game_state.explosion_map - 1, 0, 2
+        )
 
     def get_blast_coords(self, x, y) -> list[tuple[int, int]]:
         blast_coords = [(x, y)]
@@ -159,7 +172,7 @@ class StateExplorer:
                 break
             blast_coords.append((x, y - i))
         return blast_coords
-    
+
     def step_bombs(self) -> int:
         reward = 0
         bombs = self.new_game_state.bombs
@@ -175,7 +188,6 @@ class StateExplorer:
             else:
                 self.new_game_state.bombs.append([bomb[0], bomb[1] - 1])
         return reward
-    
 
     def evaluate_explosions(self) -> int:
         reward = 0
@@ -184,10 +196,14 @@ class StateExplorer:
                 self.new_game_state.others.remove(other)
                 reward += 5
         if self.new_game_state.explosion_map[self.new_game_state.self[3]] > 0:
-            self.new_game_state.self = ("dead", self.new_game_state.self[1], self.new_game_state.self[2], self.new_game_state.self[3])
+            self.new_game_state.self = (
+                "dead",
+                self.new_game_state.self[1],
+                self.new_game_state.self[2],
+                self.new_game_state.self[3],
+            )
             reward -= 5
         return reward
-        
 
     def is_action_valid(self, game_state, action) -> bool:
         self_position = game_state.self[3]
@@ -203,9 +219,16 @@ class StateExplorer:
         elif action == "WAIT":
             return True
         elif action == "BOMB":
+            if self.is_in_corner(self_position):
+                return False
             return game_state.self[2] is True
         else:
             raise ValueError(f"Invalid action: {action}")
+        
+    def is_in_corner(self, self_position) -> bool:
+        x, y = self_position
+        return (x, y) in [(1, 1), (1, 15), (15, 1), (15, 15)]
+
 
 
 if __name__ == "__main__":
@@ -228,5 +251,4 @@ if __name__ == "__main__":
     print(state2.field)
     print(state3.field)
     # needs to use deepcopy
-
 # end main

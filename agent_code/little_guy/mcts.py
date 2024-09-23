@@ -1,14 +1,14 @@
 import time
 import numpy as np
 
-from agent_code.mcts.game_state import state_from_game_state
-from agent_code.mcts.state_explorer import StateExplorer, GameState
+from agent_code.little_guy.game_state import state_from_game_state
+from agent_code.little_guy.state_explorer import StateExplorer, GameState
 
 ACTIONS = ["UP", "DOWN", "LEFT", "RIGHT", "WAIT", "BOMB"]
 
 
 class TreeNode:
-    def __init__(self, parent, action, game_state, prior=0, reward=0):
+    def __init__(self, parent, action, game_state, prior=0, reward=0, collect_coin=False):
         self.parent = parent
         self.action = action
         self.state = game_state
@@ -18,6 +18,7 @@ class TreeNode:
         self.prior = prior
         self.reward = reward
         self.max_value = 0
+        self.collect_coin = collect_coin
 
     def __str__(self):
         return f"{self.action}: {self.total_value/(self.visits + 1)} [{self.visits}]"
@@ -42,6 +43,7 @@ class MCTS:
 
     def search(self, game_state_dict):
         game_state = GameState(**game_state_dict)
+        print(game_state.self)
         root = TreeNode(None, None, game_state)
         start_time = time.time()
         i = 0
@@ -65,6 +67,8 @@ class MCTS:
             # accept defeat
             return "WAIT"
         action = max(root.children, key=lambda a: root.children[a].visits)
+        if any(root.children[a].collect_coin for a in root.children):
+            action = max(root.children, key=lambda a: root.children[a].collect_coin)
         self.log_tree(root)
         return action
 
@@ -91,14 +95,14 @@ class MCTS:
         value, policy = self.use_policy_net(game_state)
         for action in ACTIONS:
             if self.state_explorer.is_action_valid(game_state, action):
-                new_state, reward = self.state_explorer.step(game_state, action)
+                new_state, reward, collect_coin = self.state_explorer.step(game_state, action)
                 if self.state_explorer.is_terminal(new_state):
                     if self.state_explorer.is_dead(new_state):
                         reward = -1
                     else:
                         reward=current_reward + reward
                 node.children[action] = TreeNode(
-                    node, action, new_state, prior=policy[0][ACTIONS.index(action)], reward=reward
+                    node, action, new_state, prior=policy[0][ACTIONS.index(action)], reward=reward, collect_coin=collect_coin
                 )
         if not node.children:
             return -1

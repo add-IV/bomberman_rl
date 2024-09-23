@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from agent_code.mcts.state_explorer import GameState
+from agent_code.little_guy.state_explorer import GameState
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

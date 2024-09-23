@@ -6,9 +6,9 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
-from agent_code.mcts.mcts import MCTS
-from agent_code.mcts.game_state import state_from_game_state
-from agent_code.mcts.deep_network import MCTSNetwork, load_model
+from agent_code.little_guy.mcts import MCTS
+from agent_code.little_guy.game_state import state_from_game_state
+from agent_code.little_guy.deep_network import MCTSNetwork, load_model
 
 ACTIONS = ["UP", "DOWN", "LEFT", "RIGHT", "WAIT", "BOMB"]
 

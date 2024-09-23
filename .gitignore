@@ -1,6 +1,6 @@
 agent_code/training_data/training_data*
 runs/train*
-agent_code/mcts/colab_training_output/*
+agent_code/little_guy/colab_training_output/*
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
