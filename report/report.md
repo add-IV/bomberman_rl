@@ -74,10 +74,10 @@ Frederick
 | Motivation              | Frederick        | ~100       |        |
 | Challenges              | Frederick        | ~200       |        |
 | Background              |                  | 2000       |        |
-| Task description        | Karina           |            |        |
-| RL                      | Karina           |            |        |
-| Q Table                 | Karina           |            |        |
-| DQN                     | Frederick+Karina |            |        |
+| Task description        | Karina           | 92         |        |
+| RL                      | Karina           | 429        |        |
+| Q Table                 | Karina           | 634        |        |
+| DQN                     | Frederick+Karina | 219(K)     |        |
 | MCTS                    | Frederick        | ~350       |        |
 | Project Planning        |                  | 1000       |        |
 | Organisation            | Karina           |            |        |
