@@ -16,4 +16,25 @@ Since Bomberman has four agents with 6 possible actions each, the branching fact
 
 AlphaGo, the AI that beat the world champion in Go, used MCTS as its main decision-making algorithm. It was able to achieve this result by using Neural Networks instead of the classical rollout approach to evaluate the game state. This approach is called MCTS with Deep Network Evaluation (TODO: source) and is the approach we used in our project.
 
+## Tree nodes and the UCT
+
+The nodes store the prior of each action, the number of visits, and the total reward. The prior of each action is used to guide the selection of the next node, the number of visits is used to calculate the Upper Confidence Bound (OCB) value, and the total reward is used to backpropagate the result of the simulation.
+
+To navigate the tree, the Upper Confidence Bound for Trees (UCT) algorithm is used. The UCT algorithm balances exploration and exploitation by selecting the child node with the highest UCB value.
+
+$$
+UCT = \frac{Q}{N} + c \cdot \sqrt{\frac{\log{N_p}}{N}}
+$$
+
+- $Q$ is the total reward of the node
+- $c$ is a constant that determines the balance between exploration and exploitation, the "exploration constant"
+- $N_p$ is the number of visits of the parent node
+- $N$ is the number of visits of the node
+
+This algorithm balances exploration and exploitation by selecting the child node with the highest UCB value. The exploration constant $c$ determines the balance between exploration and exploitation. A higher value of $c$ will lead to more exploration, while a lower value will lead to more exploitation.
+
+## MCTS with Deep Network Evaluation
+
 Using a MCTS with Deep Network Evaluation allows us to efficiently use the available time to explore the game tree as much as possible. The MCTS can explore any number of states until its time limit is reached, and then use the best move found so far.
+
+In our implementation, we used a DQN to evaluate the game state. The DQN outputs the value of the state and the prior of each action. The value of the state is used to backpropagate the result of the simulation, and the prior of each action is used to guide the selection of the next node. This was done because updating the game state is too expensive.

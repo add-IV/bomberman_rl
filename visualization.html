@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>17x17 PNG Icon Grid</title>
+  <style>
+    /* Style for the container that holds the buttons */
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(17, 1fr); /* Creates 17 columns */
+      gap: 0px; /* Space between buttons */
+      max-width: 510px; /* 17*30px = 510px */
+      margin: 20px auto; /* Center the grid on the page */
+    }
+
+    /* Style for the individual buttons */
+    .button-grid button {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: 1px solid #ccc;
+      background: none;
+      cursor: pointer;
+      background-color: white; /* Default background */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .button-grid button img {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    /* Style for the image selector buttons */
+    .image-selectors {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .image-selectors button {
+      width: 60px;
+      height: 40px;
+      margin: 0 5px;
+      border: 2px solid #ccc;
+      cursor: pointer;
+      background-color: white;
+    }
+
+    .image-selectors button img {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    /* Highlight the selected image button */
+    .image-selectors button.selected {
+      border: 3px solid black;
+    }
+    
+    .setup-selectors {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .setup-button{
+      height: 40px;
+      text-align: center;
+      border: 2px solid #ccc;
+      cursor: pointer;
+      background-color: white;
+    }
+    
+    .setup-button p{
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1 style="text-align: center;">17x17 PNG Icon Grid</h1>
+
+  <div class="setup-selectors">
+  <button class="setup-button"><p>Setup</p></button>
+  </div>
+  <div class="image-selectors">
+    <!-- Image Selector Buttons -->
+    <button class="image-button" data-image="assets/empty.pmg"><img src="assets/empty.png" alt="Blank"></button>
+    <button class="image-button" data-image="assets/robot_blue.png"><img src="assets/robot_blue.png" alt="Robot"></button>
+    <button class="image-button" data-image="assets/bomb_blue.png"><img src="assets/bomb_blue.png" alt="Bomb"></button>
+    <button class="image-button" data-image="assets/brick.png"><img src="assets/brick.png" alt="Brick"></button>
+    <button class="image-button" data-image="assets/crate.png"><img src="assets/crate.png" alt="Crate"></button>
+    <button class="image-button" data-image="assets/coin.png"><img src="assets/coin.png" alt="Coin"></button>
+    <button class="image-button" data-image="assets/explosion_0.png"><img src="assets/explosion_0.png" alt="Explosion"></button>
+    <button class="image-button" data-image="assets/red.png"><img src="assets/red.png" alt="Red"></button>
+  </div>
+
+  <div class="button-grid">
+    <!-- Dynamically generating 225 buttons (17x17) -->
+    <script>
+      const SIDE_LENGTH = 17;
+
+      // Array of image paths to rotate through
+      const images = [
+        'assets/robot_blue.png',
+        'assets/bomb_blue.png',
+        'assets/brick.png',
+        'assets/crate.png',
+        'assets/coin.png',
+        'assets/explosion_0.png'
+      ];
+      let selectedImage = null; // No image selected initially
+
+      const gridContainer = document.querySelector('.button-grid');
+      const imageButtons = document.querySelectorAll('.image-button');
+      const setupButton = document.querySelector('.setup-button');
+
+      // Function to select an image from the image buttons
+      function selectImage(button) {
+        if (selectedImage === button.dataset.image) {
+          selectedImage = null; // Deselect the image if it's already selected
+          button.classList.remove('selected');
+          return;
+        }
+        // Deselect any currently selected button
+        imageButtons.forEach(btn => btn.classList.remove('selected'));
+        // Mark the clicked button as selected
+        button.classList.add('selected');
+        // Set the selected image
+        selectedImage = button.dataset.image;
+      }
+
+      function getButtonByIndex(index){
+        return gridContainer.children[index];
+      }
+
+      function getButtonByRowCol(row, col){
+        return getButtonByIndex((row-1)*SIDE_LENGTH + col);
+      }
+
+      function clearAllButtons(){
+        for (let i = 0; i < SIDE_LENGTH*SIDE_LENGTH; i++){
+          getButtonByIndex(i).innerHTML = '';
+        }
+      }
+
+      function setup(){
+        // clear all buttons
+        clearAllButtons();
+        for (let i = 1; i <= SIDE_LENGTH; i++){
+          getButtonByRowCol(i, 1).innerHTML = `<img src="assets/brick.png" alt="Icon">`;
+          getButtonByRowCol(i, SIDE_LENGTH).innerHTML = `<img src="assets/brick.png" alt="Icon">`;
+          getButtonByRowCol(1, i).innerHTML = `<img src="assets/brick.png" alt="Icon">`;
+          getButtonByRowCol(SIDE_LENGTH, i).innerHTML = `<img src="assets/brick.png" alt="Icon">`;
+        }
+        // checkerboard pattern
+        for (let i = 3; i < SIDE_LENGTH-1; i+=2){
+          for (let j = 3; j < SIDE_LENGTH-1; j+=2){
+            if ((i+j) % 2 == 0){
+              getButtonByRowCol(i, j).innerHTML = `<img src="assets/brick.png" alt="Icon">`;
+            }
+          }
+        }
+      }
+
+      setupButton.addEventListener('click', () => setup());
+
+      // Attach click event to each image selector button
+      imageButtons.forEach(button => {
+        button.addEventListener('click', () => selectImage(button));
+      });
+
+      // Function to rotate the image on button click
+      function rotateImage(button) {
+        let currentImageIndex = button.dataset.imageIndex || -1; // Track the current image index
+        currentImageIndex = (parseInt(currentImageIndex) + 1) % images.length; // Cycle through images
+        button.innerHTML = `<img src="${images[currentImageIndex]}" alt="Icon">`; // Update the button image
+        button.dataset.imageIndex = currentImageIndex; // Store the new image index
+      }
+
+      // Function to apply the selected image
+      function applySelectedImage(button) {
+        if (selectedImage) {
+          button.innerHTML = `<img src="${selectedImage}" alt="">`; // Update the button image to selected image
+          button.dataset.imageIndex = images.indexOf(selectedImage); // Set the image index based on the selected image
+        } else {
+          rotateImage(button); // If no image is selected, rotate through the images
+        }
+      }
+
+      // Create the 17x17 grid of buttons
+      for (let i = 0; i < SIDE_LENGTH*SIDE_LENGTH; i++) {
+        const button = document.createElement('button');
+        button.addEventListener('click', () => applySelectedImage(button)); // Add click event to apply or rotate image
+        gridContainer.appendChild(button);
+      }
+    </script>
+  </div>
+</body>
+</html>
